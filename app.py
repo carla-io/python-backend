@@ -3,7 +3,10 @@ from flask_cors import CORS
 from db import db  # import db from db.py
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:5173",
+    "https://python-frontend-9vgt.onrender.com"
+]}})
 
 # Import and register auth blueprint
 from auth import auth_bp
