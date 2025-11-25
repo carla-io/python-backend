@@ -114,8 +114,8 @@ def get_all_electronics():
         return jsonify({"error": f"Failed to fetch electronics: {str(e)}"}), 500
 
 
-# ✅ Get single electronics item by ID
-@inventory_bp.route("/<item_id>", methods=["GET"])
+# ✅ Get single electronics item by ID - FIXED ROUTE
+@inventory_bp.route("/items/<item_id>", methods=["GET"])
 def get_electronics_by_id(item_id):
     try:
         # Validate ObjectId
@@ -133,8 +133,8 @@ def get_electronics_by_id(item_id):
         return jsonify({"error": f"Failed to fetch component: {str(e)}"}), 500
 
 
-# ✅ Update electronics component
-@inventory_bp.route("/<item_id>-update", methods=["PUT"])
+# ✅ Update electronics component - FIXED ROUTE
+@inventory_bp.route("/items/<item_id>", methods=["PUT"])
 def update_electronics(item_id):
     try:
         # Validate ObjectId
@@ -199,8 +199,8 @@ def update_electronics(item_id):
         return jsonify({"error": f"Failed to update component: {str(e)}"}), 500
 
 
-# ✅ Delete electronics component
-@inventory_bp.route("/<item_id>-delete", methods=["DELETE"])
+# ✅ Delete electronics component - FIXED ROUTE
+@inventory_bp.route("/items/<item_id>", methods=["DELETE"])
 def delete_electronics(item_id):
     try:
         # Validate ObjectId
@@ -321,8 +321,9 @@ def get_statistics():
         
     except Exception as e:
         return jsonify({"error": f"Failed to fetch statistics: {str(e)}"}), 500
-    
-    # 📌 REPORTS & ANALYTICS ENDPOINTS
+
+
+# 📌 REPORTS & ANALYTICS ENDPOINTS
 @inventory_bp.route("/reports/stock-summary", methods=["GET"])
 def stock_summary():
     try:
@@ -352,7 +353,6 @@ def stock_summary():
         return jsonify({"error": f"Failed to generate stock summary: {str(e)}"}), 500
 
 
-
 @inventory_bp.route("/reports/category-breakdown", methods=["GET"])
 def category_breakdown():
     try:
@@ -378,7 +378,6 @@ def category_breakdown():
 
     except Exception as e:
         return jsonify({"error": f"Failed to get category breakdown: {str(e)}"}), 500
-
 
 
 @inventory_bp.route("/reports/supplier-performance", methods=["GET"])
@@ -417,7 +416,6 @@ def supplier_performance():
         return jsonify({"error": f"Failed to generate supplier report: {str(e)}"}), 500
 
 
-
 @inventory_bp.route("/reports/usage-trends", methods=["GET"])
 def usage_trends():
     try:
@@ -449,7 +447,6 @@ def usage_trends():
 
     except Exception as e:
         return jsonify({"error": f"Failed to get usage trends: {str(e)}"}), 500
-
 
 
 # 📌 FULL REPORT (dashboard style)
