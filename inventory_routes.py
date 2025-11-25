@@ -114,8 +114,8 @@ def get_all_electronics():
         return jsonify({"error": f"Failed to fetch electronics: {str(e)}"}), 500
 
 
-# ✅ Get single electronics item by ID - FIXED ROUTE
-@inventory_bp.route("/items/<item_id>", methods=["GET"])
+# ✅ Get single electronics item by ID
+@inventory_bp.route("/<item_id>", methods=["GET"])
 def get_electronics_by_id(item_id):
     try:
         # Validate ObjectId
@@ -133,8 +133,8 @@ def get_electronics_by_id(item_id):
         return jsonify({"error": f"Failed to fetch component: {str(e)}"}), 500
 
 
-# ✅ Update electronics component - FIXED ROUTE
-@inventory_bp.route("/items/<item_id>", methods=["PUT"])
+# ✅ Update electronics component
+@inventory_bp.route("/<item_id>-update", methods=["PUT"])
 def update_electronics(item_id):
     try:
         # Validate ObjectId
@@ -199,8 +199,8 @@ def update_electronics(item_id):
         return jsonify({"error": f"Failed to update component: {str(e)}"}), 500
 
 
-# ✅ Delete electronics component - FIXED ROUTE
-@inventory_bp.route("/items/<item_id>", methods=["DELETE"])
+# ✅ Delete electronics component
+@inventory_bp.route("/<item_id>-delete", methods=["DELETE"])
 def delete_electronics(item_id):
     try:
         # Validate ObjectId
@@ -219,6 +219,7 @@ def delete_electronics(item_id):
         
     except Exception as e:
         return jsonify({"error": f"Failed to delete component: {str(e)}"}), 500
+
 
 
 # ✅ Get low stock items
