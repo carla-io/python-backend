@@ -321,3 +321,167 @@ def get_statistics():
         
     except Exception as e:
         return jsonify({"error": f"Failed to fetch statistics: {str(e)}"}), 500
+    
+    # 📌 REPORTS & ANALYTICS ENDPOINTS
+@inventory_bp.route("/reports/stock-summary", methods=["GET"])
+def stock_summary():
+    try:
+        total_items = inventory_collection.count_documents({})
+        
+        low_stock_items = inventory_collection.count_documents({
+            "$expr": {"$lte": ["$stock", "$min_stock"]}
+        })
+        
+        in_stock_items = total_items - low_stock_items
+        
+        # Total stock quantity
+        pipeline_total = [
+            {"$group": {"_id": None, "total_stock": {"$sum": "$stock"}}}
+        ]
+        result = list(inventory_collection.aggregate(pipeline_total))
+        total_stock = result[0]["total_stock"] if result else 0
+
+        return jsonify({
+            "total_items": total_items,
+            "low_stock_items": low_stock_items,
+            "in_stock_items": in_stock_items,
+            "total_stock_quantity": total_stock
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate stock summary: {str(e)}"}), 500
+
+
+
+@inventory_bp.route("/reports/category-breakdown", methods=["GET"])
+def category_breakdown():
+    try:
+        pipeline = [
+            {"$group": {
+                "_id": "$category",
+                "count": {"$sum": 1},
+                "total_stock": {"$sum": "$stock"}
+            }}
+        ]
+
+        result = list(inventory_collection.aggregate(pipeline))
+
+        return jsonify({
+            "categories": [
+                {
+                    "category": item["_id"],
+                    "count": item["count"],
+                    "total_stock": item["total_stock"]
+                } for item in result
+            ]
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to get category breakdown: {str(e)}"}), 500
+
+
+
+@inventory_bp.route("/reports/supplier-performance", methods=["GET"])
+def supplier_performance():
+    try:
+        pipeline = [
+            {"$group": {
+                "_id": "$supplier",
+                "total_items": {"$sum": 1},
+                "total_stock": {"$sum": "$stock"},
+                "low_stock": {
+                    "$sum": {
+                        "$cond": [
+                            {"$lte": ["$stock", "$min_stock"]}, 1, 0
+                        ]
+                    }
+                }
+            }}
+        ]
+
+        suppliers = list(inventory_collection.aggregate(pipeline))
+
+        return jsonify({
+            "suppliers": [
+                {
+                    "supplier": item["_id"],
+                    "total_items": item["total_items"],
+                    "total_stock": item["total_stock"],
+                    "low_stock_items": item["low_stock"]
+                }
+                for item in suppliers
+            ]
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate supplier report: {str(e)}"}), 500
+
+
+
+@inventory_bp.route("/reports/usage-trends", methods=["GET"])
+def usage_trends():
+    try:
+        pipeline = [
+            {
+                "$group": {
+                    "_id": {
+                        "year": {"$year": {"$toDate": "$date_added"}},
+                        "month": {"$month": {"$toDate": "$date_added"}}
+                    },
+                    "items_added": {"$sum": 1}
+                }
+            },
+            {"$sort": {"_id.year": 1, "_id.month": 1}}
+        ]
+
+        trend_data = list(inventory_collection.aggregate(pipeline))
+
+        return jsonify({
+            "monthly_trends": [
+                {
+                    "year": item["_id"]["year"],
+                    "month": item["_id"]["month"],
+                    "items_added": item["items_added"]
+                }
+                for item in trend_data
+            ]
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to get usage trends: {str(e)}"}), 500
+
+
+
+# 📌 FULL REPORT (dashboard style)
+@inventory_bp.route("/reports/full-report", methods=["GET"])
+def full_report():
+    try:
+        # Reuse other pipelines
+        total_items = inventory_collection.count_documents({})
+        low_stock = inventory_collection.count_documents({"$expr": {"$lte": ["$stock", "$min_stock"]}})
+
+        category_pipeline = [
+            {"$group": {"_id": "$category", "count": {"$sum": 1}, "total_stock": {"$sum": "$stock"}}}
+        ]
+        categories = list(inventory_collection.aggregate(category_pipeline))
+
+        supplier_pipeline = [
+            {"$group": {
+                "_id": "$supplier",
+                "count": {"$sum": 1},
+                "low_stock": {"$sum": {"$cond": [{"$lte": ["$stock", "$min_stock"]}, 1, 0]}}
+            }}
+        ]
+        suppliers = list(inventory_collection.aggregate(supplier_pipeline))
+
+        return jsonify({
+            "overview": {
+                "total_items": total_items,
+                "low_stock": low_stock
+            },
+            "categories": categories,
+            "suppliers": suppliers
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate full report: {str(e)}"}), 500
